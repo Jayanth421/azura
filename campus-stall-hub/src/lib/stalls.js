@@ -2,10 +2,29 @@ import { apiFetch } from './api.js'
 
 export const STALL_CATEGORIES = ['Food', 'Games', 'Crafts', 'Tech', 'Books', 'Services', 'Other']
 
-export async function fetchStalls({ q, category } = {}) {
+export const STALL_DEPARTMENTS = [
+  'General',
+  'CSE',
+  'ECE',
+  'EEE',
+  'Mechanical',
+  'Civil',
+  'IT',
+  'AIML',
+  'AIDS',
+  'MBA',
+  'BBA',
+  'Science',
+  'Arts',
+  'Other',
+]
+
+export async function fetchStalls({ q, category, department } = {}) {
   const params = new URLSearchParams()
   if (q && String(q).trim()) params.set('q', String(q).trim())
   if (category && String(category).trim() && category !== 'All') params.set('category', String(category).trim())
+  if (department && String(department).trim() && department !== 'All')
+    params.set('department', String(department).trim())
 
   const qs = params.toString()
   const data = await apiFetch(`/api/stalls${qs ? `?${qs}` : ''}`)

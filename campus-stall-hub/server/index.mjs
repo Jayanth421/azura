@@ -27,6 +27,22 @@ import {
 } from './security.mjs'
 
 const STALL_CATEGORIES = ['Food', 'Games', 'Crafts', 'Tech', 'Books', 'Services', 'Other']
+const STALL_DEPARTMENTS = [
+  'General',
+  'CSE',
+  'ECE',
+  'EEE',
+  'Mechanical',
+  'Civil',
+  'IT',
+  'AIML',
+  'AIDS',
+  'MBA',
+  'BBA',
+  'Science',
+  'Arts',
+  'Other',
+]
 
 const trafficStats = {
   total: 0,
@@ -203,11 +219,18 @@ function normalizeCategory(category) {
   return 'Other'
 }
 
+function normalizeDepartment(department) {
+  const value = String(department ?? '').trim()
+  if (STALL_DEPARTMENTS.includes(value)) return value
+  return 'General'
+}
+
 function rowToStall(row) {
   if (!row) return null
   return {
     id: row.id,
     name: row.name,
+    department: row.department ?? 'General',
     category: row.category,
     description: row.description,
     imageUrl: row.imageUrl ?? '',
@@ -663,17 +686,34 @@ export async function handleRequest(req, res) {
       const q = sanitizeString(url.searchParams.get('q'), { max: 120 })
       const categoryRaw = sanitizeString(url.searchParams.get('category'), { max: 40 })
       const category = categoryRaw && categoryRaw !== 'All' ? normalizeCategory(categoryRaw) : ''
+      const departmentRaw = sanitizeString(url.searchParams.get('department'), { max: 40 })
+      const department =
+        departmentRaw && departmentRaw !== 'All' ? normalizeDepartment(departmentRaw) : ''
 
       const { stalls } = await getCollections()
       const filter = {}
 
       if (category) filter.category = category
+      if (department) {
+        if (department === 'General') {
+          filter.$and = (filter.$and ?? []).concat({
+            $or: [
+              { department: 'General' },
+              { department: '' },
+              { department: { $exists: false } },
+            ],
+          })
+        } else {
+          filter.department = department
+        }
+      }
 
       if (q) {
         const regex = new RegExp(escapeRegExp(q), 'i')
         filter.$or = [
           { name: regex },
           { description: regex },
+          { department: regex },
           { location: regex },
           { ownerEmail: regex },
           { ownerName: regex },
@@ -695,6 +735,7 @@ export async function handleRequest(req, res) {
       const name = sanitizeString(body?.name, { max: 120 })
       const description = sanitizeString(body?.description, { max: 2000 })
       const category = normalizeCategory(body?.category)
+      const department = normalizeDepartment(body?.department)
 
       if (!name) {
         sendJson(req, res, 400, { ok: false, error: 'Stall name is required.' })
@@ -720,6 +761,7 @@ export async function handleRequest(req, res) {
         id,
         userId: user.id,
         name,
+        department,
         category,
         description,
         imageUrl,

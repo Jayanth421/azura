@@ -17,6 +17,8 @@ export const FRONTEND_BASE_URL =
 
 export const SESSION_COOKIE_NAME = 'csh_session'
 
+export const DNS_SERVERS = process.env.DNS_SERVERS ?? ''
+
 export const SMTP_HOST = process.env.SMTP_HOST ?? ''
 export const SMTP_PORT = Number(process.env.SMTP_PORT ?? 587)
 export const SMTP_USER = process.env.SMTP_USER ?? ''

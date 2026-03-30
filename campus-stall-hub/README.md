@@ -26,6 +26,7 @@ Backend: `http://127.0.0.1:5174`
 ## Database
 
 - MongoDB (required): set `MONGODB_URI` (and optionally `MONGODB_DB_NAME`) in `server/.env` / Vercel env vars.
+- If you see `querySrv ECONNREFUSED _mongodb._tcp...` with a `mongodb+srv://` URI, set `DNS_SERVERS` in `server/.env` (comma-separated) or fix your system DNS.
 
 ## Email (verification + password reset)
 

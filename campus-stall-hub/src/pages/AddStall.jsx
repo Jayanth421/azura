@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth-context.js'
-import { STALL_CATEGORIES, createStall } from '../lib/stalls.js'
+import { STALL_CATEGORIES, STALL_DEPARTMENTS, createStall } from '../lib/stalls.js'
 import { uploadToCloudinary } from '../lib/uploads.js'
 import { imageFileToOptimizedDataUrl } from '../lib/images.js'
 import { getCategoryGradient, placeholderImageDataUrl } from '../lib/placeholders.js'
@@ -46,6 +46,7 @@ function validate(values) {
 function StallPreview({ values, ownerEmail }) {
   const name = values.name.trim() || 'Your Stall Name'
   const category = values.category || 'Other'
+  const department = values.department || 'General'
   const description =
     values.description.trim() ||
     'A short preview of your description will appear here. Keep it clear and catchy.'
@@ -87,8 +88,10 @@ function StallPreview({ values, ownerEmail }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="truncate text-lg font-extrabold text-slate-900">{name}</h3>
-                {values.location.trim() ? (
+                {department || values.location.trim() ? (
                   <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                    {department}
+                    {department && values.location.trim() ? ' • ' : ''}
                     {values.location.trim()}
                   </p>
                 ) : null}
@@ -138,10 +141,12 @@ function StallPreview({ values, ownerEmail }) {
 export default function AddStall() {
   const navigate = useNavigate()
   const categories = useMemo(() => STALL_CATEGORIES, [])
+  const departments = useMemo(() => STALL_DEPARTMENTS, [])
   const { user } = useAuth()
 
   const [values, setValues] = useState({
     name: '',
+    department: departments[0] ?? 'General',
     category: categories[0] ?? 'Other',
     description: '',
     imageUrl: '',
@@ -201,6 +206,7 @@ export default function AddStall() {
 
       const payload = {
         name: values.name,
+        department: values.department,
         category: values.category,
         description: values.description,
         imageUrl,
@@ -280,6 +286,21 @@ export default function AddStall() {
                   </div>
 
                   <div>
+                    <label className="text-sm font-semibold text-slate-700">Department</label>
+                    <select
+                      className="input mt-2"
+                      value={values.department}
+                      onChange={(e) => setField('department', e.target.value)}
+                    >
+                      {departments.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
                     <label className="text-sm font-semibold text-slate-700">Location</label>
                     <input
                       className="input mt-2"
@@ -440,6 +461,7 @@ export default function AddStall() {
                     onClick={() => {
                       setValues({
                         name: '',
+                        department: departments[0] ?? 'General',
                         category: categories[0] ?? 'Other',
                         description: '',
                         imageUrl: '',

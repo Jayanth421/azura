@@ -62,9 +62,11 @@ export default function StallCard({ stall }) {
               <h3 className="truncate text-lg font-extrabold text-slate-900">
                 {stall.name}
               </h3>
-              {stall.location ? (
+              {stall.department || stall.location ? (
                 <p className="mt-1 truncate text-xs font-semibold text-slate-500">
-                  {stall.location}
+                  {stall.department || ''}
+                  {stall.department && stall.location ? ' • ' : ''}
+                  {stall.location || ''}
                 </p>
               ) : null}
             </div>

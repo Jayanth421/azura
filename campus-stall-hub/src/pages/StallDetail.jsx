@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../lib/auth-context.js'
 import { buildContactLinks, deleteStallById, fetchStallById } from '../lib/stalls.js'
@@ -14,9 +14,23 @@ export default function StallDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [shareBusy, setShareBusy] = useState(false)
+  const [shareNote, setShareNote] = useState('')
+  const [shareMenuOpen, setShareMenuOpen] = useState(false)
+  const shareTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (shareTimeoutRef.current && typeof window !== 'undefined') {
+        window.clearTimeout(shareTimeoutRef.current)
+      }
+      shareTimeoutRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
+    setShareMenuOpen(false)
 
     async function load() {
       setLoading(true)
@@ -46,6 +60,15 @@ export default function StallDetail() {
   }, [stallId])
 
   const contacts = useMemo(() => buildContactLinks(stall), [stall])
+  const shareUrl = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    return `${window.location.origin}${location.pathname}${location.search}`
+  }, [location.pathname, location.search])
+
+  const shareText = useMemo(() => {
+    if (!stall) return ''
+    return `Azera: ${stall.name} — ${stall.category}${stall.department ? ` • ${stall.department}` : ''}${stall.location ? ` • ${stall.location}` : ''}`
+  }, [stall])
 
   const preferred =
     contacts.find((l) => l.label === 'WhatsApp') ??
@@ -81,6 +104,104 @@ export default function StallDetail() {
   const registerUrl = String(stall.registerUrl ?? '').trim()
   const imageSrc =
     stall.imageUrl || placeholderImageDataUrl({ title: stall.name, category: stall.category })
+  const shareMessage = shareUrl && shareText ? `${shareText}\n${shareUrl}` : ''
+  const whatsappShareUrl = shareMessage ? `https://wa.me/?text=${encodeURIComponent(shareMessage)}` : ''
+  const telegramShareUrl =
+    shareUrl && shareText
+      ? `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
+      : ''
+  const xShareUrl =
+    shareUrl && shareText
+      ? `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`
+      : ''
+
+  function pushShareNote(note) {
+    setShareNote(note)
+    if (typeof window === 'undefined') return
+    if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current)
+    shareTimeoutRef.current = window.setTimeout(() => {
+      setShareNote('')
+      shareTimeoutRef.current = null
+    }, 2500)
+  }
+
+  async function copyShareLink() {
+    if (!shareUrl) {
+      pushShareNote('Unable to copy link.')
+      return
+    }
+
+    if (
+      typeof navigator !== 'undefined' &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === 'function'
+    ) {
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        pushShareNote('Link copied.')
+        return
+      } catch {
+        // ignore and fall back to prompt
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.prompt('Copy this link:', shareUrl)
+      pushShareNote('Link ready to copy.')
+      return
+    }
+
+    pushShareNote('Unable to copy link.')
+  }
+
+  async function handleShare() {
+    if (shareBusy) return
+    setShareBusy(true)
+    setShareNote('')
+
+    try {
+      if (!shareUrl) {
+        pushShareNote('Unable to share.')
+        return
+      }
+
+      const shareData = {
+        title: stall.name,
+        text: shareText,
+        url: shareUrl,
+      }
+
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        try {
+          await navigator.share(shareData)
+          setShareMenuOpen(false)
+          pushShareNote('Shared.')
+          return
+        } catch (err) {
+          if (err?.name === 'AbortError') return
+        }
+      }
+
+      setShareMenuOpen(true)
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.clipboard &&
+        typeof navigator.clipboard.writeText === 'function'
+      ) {
+        try {
+          await navigator.clipboard.writeText(shareUrl)
+          pushShareNote('Link copied.')
+          return
+        } catch {
+          // ignore and fall back to share menu
+        }
+      }
+
+      pushShareNote('Share options ready.')
+    } finally {
+      setShareBusy(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 animate-fade-up">
@@ -97,36 +218,102 @@ export default function StallDetail() {
             >
               {stall.category}
             </span>
+            {stall.department ? <span className="badge">{stall.department}</span> : null}
             {stall.location ? (
               <span className="text-sm font-semibold text-slate-600">{stall.location}</span>
             ) : null}
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {preferred ? (
-            <a
-              className="btn text-white"
-              href={preferred.href}
-              target="_blank"
-              rel="noreferrer"
-              style={{ backgroundImage: `linear-gradient(90deg, ${from}, ${to})` }}
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <div className="flex flex-wrap gap-2">
+            {preferred ? (
+              <a
+                className="btn text-white"
+                href={preferred.href}
+                target="_blank"
+                rel="noreferrer"
+                style={{ backgroundImage: `linear-gradient(90deg, ${from}, ${to})` }}
+              >
+                Contact
+              </a>
+            ) : (
+              <button className="btn btn-secondary opacity-50" type="button" disabled>
+                No contact
+              </button>
+            )}
+            {registerUrl ? (
+              <a className="btn btn-secondary" href={registerUrl} target="_blank" rel="noreferrer">
+                Register
+              </a>
+            ) : null}
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={shareBusy}
+              onClick={handleShare}
+              title="Share this stall"
             >
-              Contact
-            </a>
-          ) : (
-            <button className="btn btn-secondary opacity-50" type="button" disabled>
-              No contact
+              {shareBusy ? 'Sharing...' : 'Share'}
             </button>
-          )}
-          {registerUrl ? (
-            <a className="btn btn-secondary" href={registerUrl} target="_blank" rel="noreferrer">
-              Register
-            </a>
+            <Link to="/add" className="btn btn-secondary">
+              Add Another Stall
+            </Link>
+          </div>
+          {shareNote ? (
+            <div className="text-xs font-semibold text-slate-600">{shareNote}</div>
           ) : null}
-          <Link to="/add" className="btn btn-secondary">
-            Add Another Stall
-          </Link>
+          {shareMenuOpen && shareUrl ? (
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <button
+                type="button"
+                className="chip shrink-0"
+                onClick={() => void copyShareLink()}
+              >
+                Copy link
+              </button>
+              {whatsappShareUrl ? (
+                <a
+                  className="chip shrink-0"
+                  href={whatsappShareUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Share on WhatsApp"
+                >
+                  WhatsApp
+                </a>
+              ) : null}
+              {telegramShareUrl ? (
+                <a
+                  className="chip shrink-0"
+                  href={telegramShareUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Share on Telegram"
+                >
+                  Telegram
+                </a>
+              ) : null}
+              {xShareUrl ? (
+                <a
+                  className="chip shrink-0"
+                  href={xShareUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Share on X"
+                >
+                  X
+                </a>
+              ) : null}
+              <button
+                type="button"
+                className="chip shrink-0"
+                onClick={() => setShareMenuOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -170,6 +357,12 @@ export default function StallDetail() {
                     <dt className="font-semibold text-slate-600">Email</dt>
                     <dd className="text-right font-extrabold text-slate-900">
                       {stall.ownerEmail || '-'}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="font-semibold text-slate-600">Department</dt>
+                    <dd className="text-right font-extrabold text-slate-900">
+                      {stall.department || '-'}
                     </dd>
                   </div>
                   <div className="flex items-start justify-between gap-3">

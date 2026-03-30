@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import StallCard from '../components/StallCard.jsx'
-import { STALL_CATEGORIES, fetchStalls } from '../lib/stalls.js'
+import { STALL_CATEGORIES, STALL_DEPARTMENTS, fetchStalls } from '../lib/stalls.js'
 
 export default function Stalls() {
   const [stalls, setStalls] = useState([])
@@ -11,18 +11,24 @@ export default function Stalls() {
 
   const query = searchParams.get('q') ?? ''
   const category = searchParams.get('category') ?? 'All'
+  const department = searchParams.get('department') ?? 'All'
   const categories = useMemo(() => ['All', ...STALL_CATEGORIES], [])
+  const departments = useMemo(() => ['All', ...STALL_DEPARTMENTS], [])
 
-  function updateParams({ q, category: nextCategory }) {
+  function updateParams({ q, category: nextCategory, department: nextDepartment }) {
     const params = new URLSearchParams(searchParams)
     const nextQuery = q !== undefined ? String(q) : query
     const nextCat = nextCategory !== undefined ? String(nextCategory) : category
+    const nextDept = nextDepartment !== undefined ? String(nextDepartment) : department
 
     if (nextQuery.trim()) params.set('q', nextQuery.trim())
     else params.delete('q')
 
     if (nextCat && nextCat !== 'All') params.set('category', nextCat)
     else params.delete('category')
+
+    if (nextDept && nextDept !== 'All') params.set('department', nextDept)
+    else params.delete('department')
 
     setSearchParams(params, { replace: true })
   }
@@ -34,7 +40,7 @@ export default function Stalls() {
       setLoading(true)
       setError('')
       try {
-        const rows = await fetchStalls({ q: query, category })
+        const rows = await fetchStalls({ q: query, category, department })
         if (cancelled) return
         setStalls(Array.isArray(rows) ? rows : [])
       } catch (err) {
@@ -50,9 +56,9 @@ export default function Stalls() {
     return () => {
       cancelled = true
     }
-  }, [query, category])
+  }, [query, category, department])
 
-  const hasFilters = Boolean(query.trim()) || category !== 'All'
+  const hasFilters = Boolean(query.trim()) || category !== 'All' || department !== 'All'
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -70,14 +76,14 @@ export default function Stalls() {
 
       <div className="card-outer-static bg-gradient-to-br from-blue-600 via-indigo-600 to-fuchsia-600">
         <div className="card-inner p-5 sm:p-6">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <div className="md:col-span-2">
               <label className="text-sm font-semibold text-slate-700">Search</label>
               <input
                 className="input mt-2"
                 value={query}
                 onChange={(e) => updateParams({ q: e.target.value })}
-                placeholder="Search by name, category, location, or description..."
+                placeholder="Search by name, category, department, location, or description..."
               />
             </div>
             <div>
@@ -94,32 +100,64 @@ export default function Stalls() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700">Department</label>
+              <select
+                className="input mt-2"
+                value={department}
+                onChange={(e) => updateParams({ department: e.target.value })}
+              >
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-            {categories.map((c) => {
-              const active = c === category
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => updateParams({ category: c })}
-                  className={['chip shrink-0', active ? 'chip-active' : ''].join(' ')}
-                >
-                  {c}
-                </button>
-              )
-            })}
+          <div className="mt-4 space-y-2">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {categories.map((c) => {
+                const active = c === category
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => updateParams({ category: c })}
+                    className={['chip shrink-0', active ? 'chip-active' : ''].join(' ')}
+                  >
+                    {c}
+                  </button>
+                )
+              })}
+            </div>
 
-            {hasFilters ? (
-              <button
-                type="button"
-                className="chip shrink-0"
-                onClick={() => setSearchParams({}, { replace: true })}
-              >
-                Clear
-              </button>
-            ) : null}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {departments.map((d) => {
+                const active = d === department
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => updateParams({ department: d })}
+                    className={['chip shrink-0', active ? 'chip-active' : ''].join(' ')}
+                  >
+                    {d}
+                  </button>
+                )
+              })}
+
+              {hasFilters ? (
+                <button
+                  type="button"
+                  className="chip shrink-0"
+                  onClick={() => setSearchParams({}, { replace: true })}
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
