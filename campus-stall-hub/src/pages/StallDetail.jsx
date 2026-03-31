@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import ImageModal from '../components/ImageModal.jsx'
 import { useAuth } from '../lib/auth-context.js'
 import { buildContactLinks, deleteStallById, fetchStallById } from '../lib/stalls.js'
 import { getCategoryGradient, placeholderImageDataUrl } from '../lib/placeholders.js'
@@ -17,6 +18,7 @@ export default function StallDetail() {
   const [shareBusy, setShareBusy] = useState(false)
   const [shareNote, setShareNote] = useState('')
   const [shareMenuOpen, setShareMenuOpen] = useState(false)
+  const [imageOpen, setImageOpen] = useState(false)
   const shareTimeoutRef = useRef(null)
 
   useEffect(() => {
@@ -326,18 +328,28 @@ export default function StallDetail() {
       <div className="card-outer-static" style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}>
         <div className="card-inner overflow-hidden">
           <div className="relative">
-            <img
-              src={imageSrc}
-              alt={stall.name}
-              className="h-200w-full object-cover sm:h-200"
-              onError={(e) => {
-                e.currentTarget.src = placeholderImageDataUrl({
-                  title: stall.name,
-                  category: stall.category,
-                })
-              }}
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
+            <button
+              type="button"
+              className="block w-full text-left"
+              onClick={() => setImageOpen(true)}
+              aria-label="View full image"
+            >
+              <img
+                src={imageSrc}
+                alt={stall.name}
+                className="h-64 w-full cursor-zoom-in object-cover sm:h-80"
+                onError={(e) => {
+                  e.currentTarget.src = placeholderImageDataUrl({
+                    title: stall.name,
+                    category: stall.category,
+                  })
+                }}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
+              <div className="pointer-events-none absolute bottom-4 right-4">
+                <span className="chip bg-white/85">Tap to expand</span>
+              </div>
+            </button>
           </div>
 
           <div className="p-6 sm:p-8">
@@ -457,6 +469,13 @@ export default function StallDetail() {
           </div>
         </div>
       </div>
+
+      <ImageModal
+        open={imageOpen}
+        src={imageSrc}
+        alt={stall.name}
+        onClose={() => setImageOpen(false)}
+      />
     </div>
   )
 }
