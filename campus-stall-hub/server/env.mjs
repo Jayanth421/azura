@@ -11,6 +11,8 @@ export const PORT = Number(process.env.PORT ?? 5174)
 
 export const MONGODB_URI = process.env.MONGODB_URI ?? ''
 export const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME ?? 'azera'
+export const MONGODB_REPLICA_SET = process.env.MONGODB_REPLICA_SET ?? ''
+export const MONGODB_TLS_SERVERNAME = process.env.MONGODB_TLS_SERVERNAME ?? ''
 
 export const FRONTEND_BASE_URL =
   process.env.FRONTEND_BASE_URL ?? 'http://127.0.0.1:5173'

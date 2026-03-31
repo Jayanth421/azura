@@ -27,6 +27,7 @@ Backend: `http://127.0.0.1:5174`
 
 - MongoDB (required): set `MONGODB_URI` (and optionally `MONGODB_DB_NAME`) in `server/.env` / Vercel env vars.
 - If you see `querySrv ECONNREFUSED _mongodb._tcp...` with a `mongodb+srv://` URI, set `DNS_SERVERS` in `server/.env` (comma-separated) or fix your system DNS.
+- If you see `...tlsv1 alert internal error...` when connecting to Atlas, set `MONGODB_TLS_SERVERNAME` (and optionally `MONGODB_REPLICA_SET`) in `server/.env` to override TLS SNI/replica set discovery.
 
 ## Email (verification + password reset)
 
