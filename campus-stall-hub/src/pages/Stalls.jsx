@@ -74,47 +74,6 @@ export default function Stalls() {
         </Link>
       </div>
 
-      <div className="card-outer-static bg-gradient-to-br from-blue-600 via-indigo-600 to-fuchsia-600">
-        <div className="card-inner p-5 sm:p-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <label className="text-sm font-semibold text-slate-700">Search</label>
-              <input
-                className="input mt-2"
-                value={query}
-                onChange={(e) => updateParams({ q: e.target.value })}
-                placeholder="Search by name, category, department, location, or description..."
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-slate-700">Category</label>
-              <select
-                className="input mt-2"
-                value={category}
-                onChange={(e) => updateParams({ category: e.target.value })}
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-slate-700">Department</label>
-              <select
-                className="input mt-2"
-                value={department}
-                onChange={(e) => updateParams({ department: e.target.value })}
-              >
-                {departments.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
 
           <div className="mt-4 space-y-2">
             <div className="flex gap-2 overflow-x-auto pb-1">
