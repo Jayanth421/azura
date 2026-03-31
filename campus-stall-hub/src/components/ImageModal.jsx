@@ -31,7 +31,7 @@ export default function ImageModal({ open, src, alt, onClose }) {
       <div className="absolute inset-0 bg-black/70" />
 
       <div
-        className="frame relative max-h-[90vh] max-w-[95vw] overflow-hidden"
+        className="frame relative h-[90vh] w-[95vw] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -45,7 +45,7 @@ export default function ImageModal({ open, src, alt, onClose }) {
         <img
           src={src}
           alt={alt}
-          className="block max-h-[90vh] max-w-[95vw] object-contain"
+          className="block h-full w-full object-contain"
           loading="lazy"
         />
       </div>

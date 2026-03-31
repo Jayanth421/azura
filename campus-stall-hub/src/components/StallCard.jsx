@@ -51,7 +51,7 @@ export default function StallCard({ stall }) {
             <img
               src={imageSrc}
               alt={stall.name}
-              className="h-44 w-full cursor-zoom-in object-cover transition duration-500 group-hover:scale-110"
+              className="h-52 w-full cursor-zoom-in object-cover transition duration-500 group-hover:scale-110 sm:h-56"
               loading="lazy"
               onError={(e) => {
                 e.currentTarget.src = placeholderImageDataUrl({
