@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { buildContactLinks } from '../lib/stalls.js'
 import { getCategoryGradient, placeholderImageDataUrl } from '../lib/placeholders.js'
+import ImageModal from './ImageModal.jsx'
 
 function PrimaryContactButton({ stall }) {
   const links = buildContactLinks(stall)
@@ -26,6 +28,7 @@ function PrimaryContactButton({ stall }) {
 }
 
 export default function StallCard({ stall }) {
+  const [imageOpen, setImageOpen] = useState(false)
   const imageSrc =
     stall.imageUrl ||
     placeholderImageDataUrl({ title: stall.name, category: stall.category })
@@ -38,12 +41,17 @@ export default function StallCard({ stall }) {
       style={{ backgroundImage: `linear-gradient(135deg, ${from}, ${to})` }}
     >
       <div className="card-inner overflow-hidden">
-        <Link to={`/stalls/${stall.id}`} className="block">
-          <div className="relative">
+        <div className="relative">
+          <button
+            type="button"
+            className="block w-full text-left"
+            onClick={() => setImageOpen(true)}
+            aria-label={`View image for ${stall.name}`}
+          >
             <img
               src={imageSrc}
               alt={stall.name}
-              className="h-44 w-full object-cover transition duration-500 group-hover:scale-110"
+              className="h-44 w-full cursor-zoom-in object-cover transition duration-500 group-hover:scale-110"
               loading="lazy"
               onError={(e) => {
                 e.currentTarget.src = placeholderImageDataUrl({
@@ -53,8 +61,12 @@ export default function StallCard({ stall }) {
               }}
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
+          </button>
+
+          <div className="pointer-events-none absolute bottom-3 right-3">
+            <span className="chip bg-white/85">Tap to expand</span>
           </div>
-        </Link>
+        </div>
 
         <div className="p-5">
           <div className="flex items-start justify-between gap-3">
@@ -107,6 +119,13 @@ export default function StallCard({ stall }) {
           </div>
         </div>
       </div>
+
+      <ImageModal
+        open={imageOpen}
+        src={imageSrc}
+        alt={stall.name}
+        onClose={() => setImageOpen(false)}
+      />
     </div>
   )
 }
