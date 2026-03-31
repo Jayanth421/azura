@@ -273,14 +273,15 @@ async function createSession(res, { userId, email, verified, remember }) {
 
 export async function handleRequest(req, res) {
   const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`)
-  const { pathname } = url
+  let { pathname } = url
+  if (pathname.length > 1 && pathname.endsWith('/')) pathname = pathname.replace(/\/+$/, '')
 
   trafficStats.total += 1
   const routeKey = `${req.method} ${pathname}`
   trafficStats.byRoute.set(routeKey, (trafficStats.byRoute.get(routeKey) ?? 0) + 1)
   trafficStats.byMethod.set(req.method, (trafficStats.byMethod.get(req.method) ?? 0) + 1)
 
-  if (pathname.startsWith('/api/')) {
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
     if (req.method === 'OPTIONS') {
       applyCors(req, res)
       res.statusCode = 204
