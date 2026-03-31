@@ -654,7 +654,13 @@ export async function handleRequest(req, res) {
       }
 
       const timestamp = Math.floor(Date.now() / 1000)
-      const signatureBase = `timestamp=${timestamp}${config.apiSecret}`
+      const folder = 'azera'
+      const signatureParams = { folder, timestamp }
+      const signatureBase =
+        Object.keys(signatureParams)
+          .sort()
+          .map((key) => `${key}=${signatureParams[key]}`)
+          .join('&') + config.apiSecret
       const signature = crypto.createHash('sha1').update(signatureBase).digest('hex')
 
       const form = new FormData()
@@ -662,7 +668,7 @@ export async function handleRequest(req, res) {
       form.append('timestamp', String(timestamp))
       form.append('api_key', config.apiKey)
       form.append('signature', signature)
-      form.append('folder', 'azera')
+      form.append('folder', folder)
 
       const uploadUrl = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`
       const response = await fetch(uploadUrl, { method: 'POST', body: form })
