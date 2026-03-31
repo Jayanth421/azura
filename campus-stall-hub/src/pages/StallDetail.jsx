@@ -329,7 +329,7 @@ export default function StallDetail() {
             <img
               src={imageSrc}
               alt={stall.name}
-              className="h-64 w-full object-cover sm:h-80"
+              className="h-200w-full object-cover sm:h-200"
               onError={(e) => {
                 e.currentTarget.src = placeholderImageDataUrl({
                   title: stall.name,
